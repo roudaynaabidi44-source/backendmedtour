@@ -1,25 +1,24 @@
 const mongoose = require("mongoose");
 
 const avisSchema = new mongoose.Schema({
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Patient",
-    required: true
-  },
-  medecin: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Medecin",
-    required: true
-  },
   note: {
     type: Number,
+    required: true,
     min: 1,
-    max: 5,
-    required: true
+    max: 5
   },
   commentaire: {
     type: String,
-    default: ""
+    required: true,
+    trim: true
+  },
+  utilisateur: {
+    type: String, // nom ou ID de l'utilisateur
+    required: true
+  },
+  typeElement: {
+    type: String, // exemple: "hotel", "circuit"
+    required: true
   }
 }, { timestamps: true });
 

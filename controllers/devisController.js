@@ -1,82 +1,55 @@
 const Devis = require("../models/Devis");
 
-// ➜ Patient demande un devis
-exports.demanderDevis = async (req, res) => {
+// Ajouter un devis
+exports.ajouterDevis = async (req, res) => {
   try {
-    const { medecin, description, montant } = req.body;
-    const devis = await Devis.create({
-      patient: req.user.id, // ID du patient connecté
-      medecin,
-      description,
-      montant
-    });
-    res.status(201).json(devis);
+    const nouveauDevis = new Devis(req.body);
+    await nouveauDevis.save();
+    res.status(201).json(nouveauDevis);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ message: "Erreur d’ajout", error: err.message });
   }
 };
 
-// ➜ Patient voit ses devis
-exports.listerMesDevis = async (req, res) => {
+// Lister tous les devis
+exports.listerDevis = async (req, res) => {
   try {
-    const devis = await Devis.find({ patient: req.user.id }) // ID du patient connecté
-      .populate("medecin", "nom prenom email");
+    const devis = await Devis.find();
     res.json(devis);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
 
-// ➜ Admin ou médecin voit tous les devis (avec filtre si médecin)
-exports.listerTousDevis = async (req, res) => {
+// Récupérer un devis par ID
+exports.getDevisById = async (req, res) => {
   try {
-    let filter = {};
-    if (req.user.role === 'medecin') {
-      filter.medecin = req.user.id; // le médecin ne voit que ses devis
-    }
-    const devis = await Devis.find(filter)
-      .populate('patient', 'nom prenom email')
-      .populate('medecin', 'nom prenom email');
+    const devis = await Devis.findById(req.params.id);
+    if (!devis) return res.status(404).json({ message: "Devis non trouvé" });
     res.json(devis);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
 
-// ➜ Médecin voit les devis qui lui sont adressés (route spécifique si nécessaire)
-exports.listerDevisMedecin = async (req, res) => {
-  try {
-    const devis = await Devis.find({ medecin: req.user.id }) // ID du médecin connecté
-      .populate("patient", "nom prenom email");
-    res.json(devis);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-// ➜ Mettre à jour un devis (admin ou médecin)
+// Mettre à jour un devis
 exports.updateDevis = async (req, res) => {
   try {
-    const { id } = req.params;
-    const devis = await Devis.findByIdAndUpdate(id, req.body, { new: true });
-    if (!devis) {
-      return res.status(404).json({ message: 'Devis non trouvé' });
-    }
-    res.json(devis);
+    const updatedDevis = await Devis.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updatedDevis) return res.status(404).json({ message: "Devis non trouvé" });
+    res.json(updatedDevis);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ message: "Erreur de mise à jour", error: err.message });
   }
 };
 
-// ➜ Supprimer un devis (admin uniquement)
+// Supprimer un devis
 exports.deleteDevis = async (req, res) => {
   try {
-    const devis = await Devis.findByIdAndDelete(req.params.id);
-    if (!devis) {
-      return res.status(404).json({ message: 'Devis non trouvé' });
-    }
-    res.json({ message: 'Devis supprimé avec succès' });
+    const deletedDevis = await Devis.findByIdAndDelete(req.params.id);
+    if (!deletedDevis) return res.status(404).json({ message: "Devis non trouvé" });
+    res.json({ message: "Devis supprimé avec succès" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };

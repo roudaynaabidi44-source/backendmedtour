@@ -1,14 +1,12 @@
 const mongoose = require("mongoose");
 
 const devisSchema = new mongoose.Schema({
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Patient",
+  client: {
+    type: String,
     required: true
   },
-  medecin: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Medecin",
+  emailClient: {
+    type: String,
     required: true
   },
   description: {

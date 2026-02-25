@@ -1,59 +1,55 @@
 const RendezVous = require("../models/RendezVous");
 
-// Patient prend un rendez-vous
-exports.prendreRendezVous = async (req, res) => {
+// Ajouter un rendez-vous
+exports.ajouterRendezVous = async (req, res) => {
   try {
-    const { medecin, date, remarque } = req.body;
-    const rdv = await RendezVous.create({
-      patient: req.user.id, // patient connecté
-      medecin,
-      date,
-      remarque: remarque || "",
-      status: "en attente"
-    });
-    res.status(201).json(rdv);
+    const nouveauRDV = new RendezVous(req.body);
+    await nouveauRDV.save();
+    res.status(201).json(nouveauRDV);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ message: "Erreur d’ajout", error: err.message });
   }
 };
 
-// Patient liste ses rendez-vous
-exports.listerMesRendezVous = async (req, res) => {
+// Lister tous les rendez-vous
+exports.listerRendezVous = async (req, res) => {
   try {
-    const rdvs = await RendezVous.find({ patient: req.user.id })
-      .populate("medecin", "nom prenom email");
+    const rdvs = await RendezVous.find();
     res.json(rdvs);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
 
-// Médecin liste ses rendez-vous
-exports.listerRendezVousMedecin = async (req, res) => {
+// Récupérer un rendez-vous par ID
+exports.getRendezVousById = async (req, res) => {
   try {
-    const rdvs = await RendezVous.find({ medecin: req.user.id })
-      .populate("patient", "nom prenom email");
-    res.json(rdvs);
+    const rdv = await RendezVous.findById(req.params.id);
+    if (!rdv) return res.status(404).json({ message: "Rendez-vous non trouvé" });
+    res.json(rdv);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
 
-// Modifier un rendez-vous (patient ou médecin concerné)
-exports.modifierRendezVous = async (req, res) => {
+// Mettre à jour un rendez-vous
+exports.updateRendezVous = async (req, res) => {
   try {
-    const { rdvId } = req.params;
-    const rdv = await RendezVous.findById(rdvId);
-    if (!rdv) {
-      return res.status(404).json({ message: "Rendez-vous non trouvé" });
-    }
-    // Vérifier que l'utilisateur est le patient ou le médecin de ce rdv
-    if (rdv.patient.toString() !== req.user.id && rdv.medecin.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Accès non autorisé" });
-    }
-    const updated = await RendezVous.findByIdAndUpdate(rdvId, req.body, { new: true });
-    res.json(updated);
+    const updatedRDV = await RendezVous.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    if (!updatedRDV) return res.status(404).json({ message: "Rendez-vous non trouvé" });
+    res.json(updatedRDV);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(400).json({ message: "Erreur de mise à jour", error: err.message });
+  }
+};
+
+// Supprimer un rendez-vous
+exports.deleteRendezVous = async (req, res) => {
+  try {
+    const deletedRDV = await RendezVous.findByIdAndDelete(req.params.id);
+    if (!deletedRDV) return res.status(404).json({ message: "Rendez-vous non trouvé" });
+    res.json({ message: "Rendez-vous supprimé avec succès" });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
