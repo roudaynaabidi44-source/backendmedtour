@@ -1,27 +1,58 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const devisSchema = new mongoose.Schema({
-  client: {
-    type: String,
-    required: true
+  patient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
   },
-  emailClient: {
+  clinique: {
     type: String,
-    required: true
+    required: true,
   },
-  description: {
+  pays: {
     type: String,
-    required: true
+    required: true,
+  },
+  specialite: {
+    type: String,
+    required: true,
+  },
+  statut: {
+    type: String,
+    enum: ['En attente', 'En analyse médicale', 'Approuvé', 'Rejeté', 'Expiré'],
+    default: 'En attente',
   },
   montant: {
     type: Number,
-    required: true
   },
-  status: {
+  montantDevise: {
     type: String,
-    enum: ["en attente", "accepté", "refusé"],
-    default: "en attente"
-  }
-}, { timestamps: true });
+    default: '€',
+  },
+  date: {
+    type: Date,
+    default: Date.now,
+  },
+  dossier: {
+    type: String,
+    enum: ['En cours', 'Complet', 'Incomplet'],
+    default: 'En cours',
+  },
+  details: {
+    traitement: String,
+    duree: String,
+    recommandations: String,
+  },
+  documents: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Document',
+  }],
+  validUntil: Date,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-module.exports = mongoose.model("Devis", devisSchema);
+module.exports = mongoose.model('Devis', devisSchema);

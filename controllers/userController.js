@@ -10,37 +10,34 @@ const asyncHandler = fn => (req, res, next) =>
 // --------- AUTH ---------
 
 // Inscription
-exports.register = asyncHandler(async (req, res) => {
-  const { nom, prenom, email, mdp } = req.body;
+exports.register = async (req, res) => {
+  try {
+    const { nom, prenom, email, mdp } = req.body;
 
-  if (!nom || !prenom || !email || !mdp) {
-    return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+    const userExiste = await User.findOne({ email });
+    if (userExiste) {
+      return res.status(400).json({ message: "Email déjà utilisé" });
+    }
+
+    const user = await User.create({
+      nom,
+      prenom,
+      email,
+      mdp,
+      image: req.file ? req.file.filename : null
+    });
+
+    res.status(201).json({
+      _id: user._id,
+      nom: user.nom,
+      email: user.email,
+      image: user.image,
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-
-  const userExiste = await User.findOne({ email });
-  if (userExiste) {
-    return res.status(400).json({ message: "Email déjà utilisé" });
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const mdpHash = await bcrypt.hash(mdp, salt);
-
-  const user = await User.create({
-    nom,
-    prenom,
-    email,
-    mdp: mdpHash,
-    role: req.body.role || "medecin",
-    image: req.file ? req.file.filename : null
-  });
-
-  res.status(201).json({
-    _id: user._id,
-    nom: user.nom,
-    email: user.email,
-    image: user.image
-  });
-});
+};
 
 // Connexion
 exports.login = asyncHandler(async (req, res) => {
