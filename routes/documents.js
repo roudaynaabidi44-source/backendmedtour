@@ -1,19 +1,27 @@
 const express = require('express');
+const { authMiddleware } = require('../middleware/auth');
+const Document = require('../models/Document');
+
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const upload = require('../middleware/upload');
-const {
-  getDocuments,
-  uploadDocument,
-  deleteDocument,
-} = require('../controllers/documentController');
 
-router.use(protect);
+// LISTE DES DOCUMENTS
+router.get('/documents', authMiddleware, async (req, res) => {
+    try {
+        const documents = await Document.find({ patientId: req.user._id });
+        res.json({ success: true, data: documents });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
-router.route('/')
-  .get(getDocuments)
-  .post(upload.single('document'), uploadDocument);
-
-router.delete('/:id', deleteDocument);
+// SUPPRIMER DOCUMENT
+router.delete('/documents/:id', authMiddleware, async (req, res) => {
+    try {
+        await Document.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: 'Document supprimé' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
 module.exports = router;

@@ -1,58 +1,30 @@
 const mongoose = require('mongoose');
 
-const devisSchema = new mongoose.Schema({
-  patient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  clinique: {
+const DevisSchema = new mongoose.Schema({
+  patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  cliniqueId: { type: mongoose.Schema.Types.ObjectId, ref: 'Clinique', required: true },
+  cliniqueNom: { type: String }, // dénormalisé pour affichage rapide
+  specialite: { type: String, required: true },
+  medecinId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  medecinNom: { type: String },
+  montantEstimeParPatient: { type: Number, default: 0 },
+  status: {
     type: String,
-    required: true,
+    enum: ['en_attente', 'accepte', 'refuse', 'en_cours', 'termine'],
+    default: 'en_attente'
   },
-  pays: {
-    type: String,
-    required: true,
+  reponse: {
+    montantPropose: { type: Number },
+    message: { type: String },
+    dateReponse: { type: Date }
   },
-  specialite: {
-    type: String,
-    required: true,
-  },
-  statut: {
-    type: String,
-    enum: ['En attente', 'En analyse médicale', 'Approuvé', 'Rejeté', 'Expiré'],
-    default: 'En attente',
-  },
-  montant: {
-    type: Number,
-  },
-  montantDevise: {
-    type: String,
-    default: '€',
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
-  dossier: {
-    type: String,
-    enum: ['En cours', 'Complet', 'Incomplet'],
-    default: 'En cours',
-  },
-  details: {
-    traitement: String,
-    duree: String,
-    recommandations: String,
-  },
-  documents: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Document',
-  }],
-  validUntil: Date,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  montant: { type: String },
+  montantNumerique: { type: Number, default: 0 },
+  dossier: { type: String, default: 'En cours' },
+  details: { type: mongoose.Schema.Types.Mixed },
+  dateDemande: { type: Date, default: Date.now },
+  dateReponse: { type: Date },
+  messageReponse: { type: String }
 });
 
-module.exports = mongoose.model('Devis', devisSchema);
+module.exports = mongoose.models.Devis || mongoose.model('Devis', DevisSchema);

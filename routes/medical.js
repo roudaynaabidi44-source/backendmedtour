@@ -1,16 +1,32 @@
 const express = require('express');
+const { authMiddleware } = require('../middleware/auth');
+const MedicalRecord = require('../models/MedicalRecord');
+
 const router = express.Router();
-const { protect } = require('../middleware/auth');
-const {
-  getMedicalFollowUp,
-  updateHealthIndicators,
-  addConsultation,
-} = require('../controllers/medicalController');
 
-router.use(protect);
+// SUIVI MÉDICAL
+router.get('/medical/follow-up', authMiddleware, async (req, res) => {
+    try {
+        const record = await MedicalRecord.findOne({ patientId: req.user._id });
+        res.json({ success: true, data: record || {} });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
-router.get('/follow-up', getMedicalFollowUp);
-router.put('/indicators', updateHealthIndicators);
-router.post('/consultations', addConsultation);
+// INDICATEURS
+router.put('/medical/indicators', authMiddleware, async (req, res) => {
+    try {
+        let record = await MedicalRecord.findOne({ patientId: req.user._id });
+        if (!record) {
+            record = new MedicalRecord({ patientId: req.user._id });
+        }
+        record.indicateurs = req.body.indicateurs;
+        await record.save();
+        res.json({ success: true, data: record });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 
 module.exports = router;

@@ -1,25 +1,47 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const avisSchema = new mongoose.Schema({
-  note: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5
+  targetType: { 
+    type: String, 
+    enum: ['medecin', 'clinique', 'hebergement', 'transport', 'hotel'],  // 👍 'hotel' ajouté
+    required: true 
   },
-  commentaire: {
+  targetId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    required: true, 
+    refPath: 'targetModel' 
+  },
+  targetModel: { 
+    type: String, 
+    required: true 
+  },
+  note: { 
+    type: Number, 
+    required: true, 
+    min: 1, 
+    max: 5 
+  },
+  commentaire: { 
+    type: String, 
+    required: true 
+  },
+  patientId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: true 
+  },
+  date: { 
+    type: Date, 
+    default: Date.now 
+  },
+  verified: { 
+    type: Boolean, 
+    default: false 
+  },
+  response: {                      // ✅ Ajout pour permettre à l'hôtel/médecin/clinique de répondre
     type: String,
-    required: true,
-    trim: true
-  },
-  utilisateur: {
-    type: String, // nom ou ID de l'utilisateur
-    required: true
-  },
-  typeElement: {
-    type: String, // exemple: "hotel", "circuit"
-    required: true
+    default: null
   }
-}, { timestamps: true });
+});
 
-module.exports = mongoose.model("Avis", avisSchema);
+module.exports = mongoose.model('Avis', avisSchema);

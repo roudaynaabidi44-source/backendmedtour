@@ -122,3 +122,63 @@ exports.deleteUtilisateur = asyncHandler(async (req, res) => {
   if (!deletedUser) return res.status(404).json({ message: "Utilisateur non trouvé" });
   res.json({ message: "Utilisateur supprimé avec succès" });
 });
+const crypto = require("crypto");
+const User = require("../models/User");
+
+exports.forgotPassword = async (req, res) => {
+ const user = await User.findOne({ email: req.body.email });
+
+ // Ne pas révéler si l'utilisateur existe
+ if (!user) {
+   return res.json({ message: "Si cet email existe, un lien a été envoyé" });
+ }
+
+ // Générer token
+ const resetToken = crypto.randomBytes(32).toString("hex");
+
+ // Hasher le token
+ const hashedToken = crypto
+   .createHash("sha256")
+   .update(resetToken)
+   .digest("hex");
+
+ user.resetPasswordToken = hashedToken;
+ user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 min
+
+ await user.save();
+
+ const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
+
+ // Envoyer email
+ await sendEmail(user.email, resetUrl);
+
+ res.json({ message: "Email envoyé" });
+};
+exports.resetPassword = async (req, res) => {
+ const crypto = require("crypto");
+ const bcrypt = require("bcryptjs");
+
+ const hashedToken = crypto
+   .createHash("sha256")
+   .update(req.params.token)
+   .digest("hex");
+
+ const user = await User.findOne({
+   resetPasswordToken: hashedToken,
+   resetPasswordExpire: { $gt: Date.now() },
+ });
+
+ if (!user) {
+   return res.status(400).json({ message: "Token invalide ou expiré" });
+ }
+
+ user.password = await bcrypt.hash(req.body.password, 10);
+
+ user.resetPasswordToken = undefined;
+ user.resetPasswordExpire = undefined;
+
+ await user.save();
+
+ res.json({ message: "Mot de passe mis à jour" });
+};
+
